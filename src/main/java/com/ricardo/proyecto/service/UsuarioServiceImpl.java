@@ -8,12 +8,16 @@ package com.ricardo.proyecto.service;
 import com.ricardo.proyecto.dao.UsuarioDAOImpl;
 import com.ricardo.proyecto.model.Usuario;
 import java.util.List;
+import javax.ejb.LocalBean;
+import javax.ejb.Stateless;
 import javax.inject.Inject;
 
 /**
  *
  * @author ricardotoledo
  */
+@LocalBean
+@Stateless
 public class UsuarioServiceImpl implements UsuarioService{
     @Inject
     private UsuarioDAOImpl uDAO;
@@ -40,5 +44,8 @@ public class UsuarioServiceImpl implements UsuarioService{
     @Override
     public Usuario find(Usuario u) {
         return uDAO.find(u);
+    }
+    public List<Usuario> paginate(int min , int max){
+       return uDAO.paginate(min, max);
     }
 }

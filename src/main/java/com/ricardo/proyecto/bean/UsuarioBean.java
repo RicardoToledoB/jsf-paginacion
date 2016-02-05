@@ -23,6 +23,7 @@ public class UsuarioBean implements Serializable {
     Usuario usuarioEdit;
     Usuario usuarioView;
     List<Usuario> lista;
+    List<Usuario> paginate;
     private List<String> rolesSeleccionados;
 
     @PostConstruct
@@ -83,8 +84,15 @@ public class UsuarioBean implements Serializable {
 
     public void save() {
          uService.save(usuario);
-
     }
 
-  
+    public List<Usuario> getPaginate() {
+        return uService.paginate(0, 5);
+    }
+
+    public void setPaginate(List<Usuario> paginate) {
+        this.paginate = paginate;
+    }
+
+    
 }
