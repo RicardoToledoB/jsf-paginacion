@@ -48,4 +48,12 @@ public class UsuarioServiceImpl implements UsuarioService{
     public List<Usuario> paginate(int min , int max){
        return uDAO.paginate(min, max);
     }
+     public int cantRows(){
+        
+        return uDAO.cantRows();
+    }
+    
+    public int cantPages(){
+        return uDAO.cantPages();
+    }
 }

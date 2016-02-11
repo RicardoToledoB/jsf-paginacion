@@ -1,12 +1,12 @@
 package com.ricardo.proyecto.bean;
-
 import com.ricardo.proyecto.model.Usuario;
 import com.ricardo.proyecto.service.UsuarioServiceImpl;
 import javax.inject.Named;
 import javax.enterprise.context.SessionScoped;
 import java.io.Serializable;
 import java.util.List;
-import javax.annotation.PostConstruct;
+import javax.faces.component.UICommand;
+import javax.faces.event.ActionEvent;
 import javax.inject.Inject;
 
 /**
@@ -19,80 +19,138 @@ public class UsuarioBean implements Serializable {
 
     @Inject
     private UsuarioServiceImpl uService;
-    Usuario usuario;
-    Usuario usuarioEdit;
-    Usuario usuarioView;
-    List<Usuario> lista;
-    List<Usuario> paginate;
-    private List<String> rolesSeleccionados;
+    // Data.
+    private List<Usuario> dataList;
+    private int totalRows;
 
-    @PostConstruct
-    public void init() {
+    // Paging.
+    private int firstRow;
+    private int rowsPerPage;
+    private int totalPages;
+    private int pageRange;
+    private Integer[] pages;
+    private int currentPage;
 
-        usuario = new Usuario();
-        usuarioEdit = new Usuario();
-        usuarioView = new Usuario();
-    }
+    // Sorting.
+    private String sortField;
+    private boolean sortAscending;
+
+    // Constructors -------------------------------------------------------------------------------
 
     public UsuarioBean() {
-
+        // Set default values somehow (properties files?).
+        rowsPerPage = 10; // Default rows per page (max amount of rows to be displayed at once).
+        pageRange = 10; // Default page range (max amount of page links to be displayed at once).
+        sortField = "id"; // Default sort field.
+        sortAscending = true; // Default sort direction.
     }
 
-    public Usuario getUsuario() {
-        return usuario;
+    // Paging actions -----------------------------------------------------------------------------
+
+    public void pageFirst() {
+        page(0);
     }
 
-    public void setUsuario(Usuario usuario) {
-        this.usuario = usuario;
+    public void pageNext() {
+        page(firstRow + rowsPerPage);
     }
 
-    public List<Usuario> getLista() {
-        return lista = uService.list();
+    public void pagePrevious() {
+        page(firstRow - rowsPerPage);
     }
 
-    public void setLista(List<Usuario> lista) {
-        this.lista = lista;
+    public void pageLast() {
+        page(totalRows - ((totalRows % rowsPerPage != 0) ? totalRows % rowsPerPage : rowsPerPage));
     }
 
-    public Usuario getUsuarioEdit() {
-        return usuarioEdit;
+    public void page(ActionEvent event) {
+        page(((Integer) ((UICommand) event.getComponent()).getValue() - 1) * rowsPerPage);
     }
 
-    public String setUsuarioEdit(Usuario usuarioEdit) {
-        this.usuarioEdit = uService.find(usuarioEdit);
-        return "edit?faces-redirect=true";
+    private void page(int firstRow) {
+        this.firstRow = firstRow;
+        loadDataList(); // Load requested page.
     }
 
-    public Usuario getUsuarioView() {
-        return usuarioView;
+    // Sorting actions ----------------------------------------------------------------------------
 
+    public void sort(ActionEvent event) {
+        String sortFieldAttribute = (String) event.getComponent().getAttributes().get("sortField");
+
+        // If the same field is sorted, then reverse order, else sort the new field ascending.
+        if (sortField.equals(sortFieldAttribute)) {
+            sortAscending = !sortAscending;
+        } else {
+            sortField = sortFieldAttribute;
+            sortAscending = true;
+        }
+
+        pageFirst(); // Go to first page and load requested page.
     }
 
-    public String setUsuarioView(Usuario usuarioView) {
-        this.usuarioView = uService.find(usuarioView);
-        return "view?faces-redirect=true";
+    // Loaders ------------------------------------------------------------------------------------
+
+    private void loadDataList() {
+
+        // Load list and totalCount.
+        try {
+            dataList = uService.paginate(firstRow, rowsPerPage);
+            totalRows = uService.cantRows();
+        } catch (Exception e) {
+            throw new RuntimeException(e); // Handle it yourself.
+        }
+
+        // Set currentPage, totalPages and pages.
+        currentPage = (totalRows / rowsPerPage) - ((totalRows - firstRow) / rowsPerPage) + 1;
+        totalPages = (totalRows / rowsPerPage) + ((totalRows % rowsPerPage != 0) ? 1 : 0);
+        int pagesLength = Math.min(pageRange, totalPages);
+        pages = new Integer[pagesLength];
+
+        // firstPage must be greater than 0 and lesser than totalPages-pageLength.
+        int firstPage = Math.min(Math.max(0, currentPage - (pageRange / 2)), totalPages - pagesLength);
+
+        // Create pages (page numbers for page links).
+        for (int i = 0; i < pagesLength; i++) {
+            pages[i] = ++firstPage;
+        }
     }
 
-    public void delete(Usuario u) {
-        uService.delete(u);
+    // Getters ------------------------------------------------------------------------------------
+
+    public List<Usuario> getDataList() {
+        if (dataList == null) {
+            loadDataList(); // Preload page for the 1st view.
+        }
+        return dataList;
     }
 
-    public void edit(Usuario u) {
-        uService.edit(u);
-        usuarioEdit = new Usuario();
+    public int getTotalRows() {
+        return totalRows;
     }
 
-    public void save() {
-         uService.save(usuario);
+    public int getFirstRow() {
+        return firstRow;
     }
 
-    public List<Usuario> getPaginate() {
-        return uService.paginate(0, 5);
+    public int getRowsPerPage() {
+        return rowsPerPage;
     }
 
-    public void setPaginate(List<Usuario> paginate) {
-        this.paginate = paginate;
+    public Integer[] getPages() {
+        return pages;
     }
 
-    
+    public int getCurrentPage() {
+        return currentPage;
+    }
+
+    public int getTotalPages() {
+        return totalPages;
+    }
+
+    // Setters ------------------------------------------------------------------------------------
+
+    public void setRowsPerPage(int rowsPerPage) {
+        this.rowsPerPage = rowsPerPage;
+    }
 }

@@ -70,11 +70,11 @@ public class UsuarioDAOImpl implements UsuarioDAO {
     public int cantRows(){
         String sql = "SELECT COUNT(u) FROM Usuario u";
         Query query = em.createQuery(sql);
-        int size=(int) query.getSingleResult();
+        Integer size=(Integer) query.getSingleResult().hashCode();
         return size;
     }
     
     public int cantPages(){
-        return this.cantRows()/5;
+        return this.cantRows()/10;
     }
 }
